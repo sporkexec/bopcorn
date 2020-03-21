@@ -1,53 +1,26 @@
-const BopcornClientApi = require('./api.js');
-const Store = require('./store.js');
-const WebTorrent = require('webtorrent');
-const React = require('react');
-const ReactDOM = require('react-dom');
-
-class App extends React.Component {
-    render() {
-        return <i>ok</i>;
-    }
-}
-
-class BopcornClient {
-    constructor(store, clientApi, wtClient) {
-        this.store = store;
-        this.bcApi = clientApi;
-        this.wtClient = wtClient;
-    }
-    main() {
-        // This flows backwards because these aren't realistic flows,
-        // with UI involved this'll make more sense.
-
-        this.bcApi.rx.on('createRoom', eventData => {
-            console.log('room created:', eventData.room);
-            // room created, now join it
-            this.bcApi.tx('joinRoom', {roomId: eventData.room.id});
-        });
-
-        this.bcApi.rx.on('whoami', eventData => {
-            console.log('whoami:', eventData.user);
-            // registered as guest, now make a room
-            this.bcApi.tx('createRoom', {name: 'Room'});
-        });
-
-        this.bcApi.tx('registerGuest', {name: 'Guest'});
-
-        ReactDOM.render(
-            <App data={this.store.data}></App>,
-            document.getElementById('bopcornRoot')
-        );
-    }
-}
+import Store from './store';
+import ServerWsApi from './api';
+import App from './ui/App.vue';
+import Vue from 'vue';
+// import WebTorrent from 'webtorrent';
 
 function main() {
-    const wsuri = 'ws://' + window.location.host;
-    let clientApi = new BopcornClientApi(wsuri, 'bopcorn-api');
-    let wtClient = new WebTorrent();
-    let store = new Store(clientApi);
-    let client = new BopcornClient(store, clientApi, wtClient);
-    client.main()
+    const serverWsParams = ['ws://' + window.location.host, 'bopcorn-api'];
+
+    // Store receives updates from api via dispatch, sends events via serverApi.tx
+    const store = new Store();
+    const serverApi = new ServerWsApi(serverWsParams, store.dispatch);
+    store.commit('server/_setServerTx', serverApi.tx.bind(serverApi));
+
+    // TODO: make wt, hook into torrent store
+    // let wtClient = new WebTorrent();
+
+    const app = new Vue({
+        el: '#bopcornRoot',
+        store,
+        components: { App },
+        render: h => h('app'),
+    });
 }
 
 main();

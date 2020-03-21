@@ -14,7 +14,7 @@ function main() {
         // Client code can rebuild in development
         const Bundler = require('parcel-bundler');
         const clientEntryPoint = path.resolve(__dirname, '../client/index.html');
-        const options = {autoInstall: false};
+        const options = {autoInstall: false, hmr: false};
         const bundler = new Bundler(clientEntryPoint, options);
         app.use(bundler.middleware());
     }
