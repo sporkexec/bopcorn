@@ -9,8 +9,8 @@ function main() {
 
     // Store receives updates from api via dispatch, sends events via serverApi.tx
     const store = new Store();
-    const serverApi = new ServerWsApi(serverWsParams, store.dispatch);
-    store.commit('server/_setServerTx', serverApi.tx.bind(serverApi));
+    const serverApi = new ServerWsApi(serverWsParams);
+    store.commit('server/_linkServerApi', serverApi);
 
     // TODO: make wt, hook into torrent store
     // let wtClient = new WebTorrent();

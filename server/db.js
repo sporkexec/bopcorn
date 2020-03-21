@@ -118,6 +118,31 @@ class DB {
         return await this._all(`DELETE FROM roomOccupants
             WHERE roomId = ? AND userId = ?`, [roomId, userId]);
     }
+
+    async queueItemsAdd(userId, queueItemInput) {
+        const id = this.genId();
+        // TODO append instead, maybe allow mods+ to directly insert to an index?
+        // actually that makes things hard for clients to recalc, maybe always append and reorder with separate tx?
+        const playlistIndex = 1;
+        const validity = 60 * 60; // 1h, TODO calculate from reported duration, update upon queue reorder, cleanup
+        const expiry = Date.now() + validity;
+        const qi = queueItemInput;
+        await this._run(`
+            INSERT INTO queueItems (id, roomId, playlistIndex, queuerUserId, expiryUnixtime, contentUri, duration, filesize, title, artist)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [id, qi.roomId, playlistIndex, userId, expiry, qi.contentUri, qi.duration, qi.filesize, qi.title, qi.artist]);
+        return id;
+    }
+
+    async queueItemsGet(roomId) {
+        return await this._all(`SELECT * FROM queueItems
+            WHERE roomId = ? AND expiryUnixtime > ?
+            ORDER BY playlistIndex`, [roomId, Date.now()]);
+    }
+
+    async queueItemsGetItem(itemId) {
+        return await this._get(`SELECT * FROM queueItems WHERE id = ?`, [itemId]);
+    }
 }
 
 module.exports = DB;

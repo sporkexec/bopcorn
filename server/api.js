@@ -19,6 +19,8 @@ class BopcornServerApi {
             'createRoom': this.rxCreateRoom,
             'registerGuest': this.rxRegisterGuest,
             'reloadRoomOccupancy': this.rxReloadRoomOccupancy,
+            'reloadQueueItems': this.rxReloadQueueItems,
+            'addQueueItem': this.rxAddQueueItem,
         };
     }
 
@@ -159,7 +161,18 @@ class BopcornServerApi {
         this._txEvent(connection, 'roomOccupancy', {occupants})
     }
 
-    // TODO: broadcast tx events to room
+    async rxReloadQueueItems(connection, eventData) {
+        let queueItems = await this.db.queueItemsGet(eventData.roomId);
+        // TODO authorization: ensure connection's user is in occupants
+        this._txEvent(connection, 'queueItems', {queueItems})
+    }
+
+    async rxAddQueueItem(connection, eventData) {
+        // TODO authorization: ensure user is occupant, check DJs, check is mod
+        const itemId = await this.db.queueItemsAdd(connection.userId, eventData.queueItem);
+        const queueItem = await this.db.queueItemsGetItem(itemId);
+        this._txEventToRoom(queueItem.roomId, 'queueItemsAdd', {queueItem});
+    }
 }
 
 module.exports = BopcornServerApi;

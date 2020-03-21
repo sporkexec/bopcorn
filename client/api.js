@@ -10,9 +10,9 @@ import {w3cwebsocket} from 'websocket';
 // rx: nothing to ack (server shouldn't care), we could queue for perf/dispatch/etc reasons but no connectivity need
 
 export default class {
-    constructor(wsServerParams, storeDispatch) {
+    constructor(wsServerParams) {
         // We call storeDispatch upon receiving messages
-        this.storeDispatch = storeDispatch;
+        this.storeDispatch = null;
 
         this.wsServerParams = wsServerParams;
         this.wsConnection = null;

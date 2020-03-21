@@ -3,6 +3,7 @@ export default {
     state: () => ({
         // Use a new state object each time, prevents pollution in eg tests
         whoami: {},
+        queueItems: [],
         room: {},
         roomOccupants: [],
         serverWsConnection: {
@@ -19,10 +20,14 @@ export default {
         setRoomOccupants(state, occupants) {
             state.roomOccupants = occupants;
         },
-        _setServerTx(state, tx) {
+        setQueueItems(state, queueItems) {
+            state.queueItems = queueItems;
+        },
+        _linkServerApi(state, serverApi) {
             // Used once to wire serverWs <-> serverStore
             // tx(eventName, eventData, headers) -> txId
-            state.serverWsConnection.txMethod = tx;
+            state.serverWsConnection.txMethod = serverApi.tx.bind(serverApi);
+            serverApi.storeDispatch = this.dispatch.bind(this); // calls _rx
         },
     },
     actions: {
@@ -45,6 +50,14 @@ export default {
         rx_roomOccupancyRemove({commit, state}, {userId}) {
             const newOccupants = state.roomOccupants.filter(o => o.userId != userId);
             commit('setRoomOccupants', newOccupants);
+        },
+        rx_queueItems({commit}, {queueItems}) {
+            commit('setQueueItems', queueItems);
+        },
+        rx_queueItemsAdd({commit, state}, {queueItem}) {
+            const newItems = state.queueItems.filter(i => i.id != queueItem.id);
+            newItems.push(queueItem);
+            commit('setQueueItems', newItems)
         },
 
         // Internal
