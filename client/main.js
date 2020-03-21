@@ -3,7 +3,14 @@ const WebTorrent = require('webtorrent');
 
 class BopcornClient {
     constructor(clientApi, wtClient) {
-        console.log(clientApi, wtClient);
+        this.bcApi = clientApi;
+        this.wtClient = wtClient;
+    }
+    main() {
+        this.bcApi.rx.on('whoami', function(eventData) {
+            console.log('whoami:', eventData.user);
+        });
+        this.bcApi.tx('registerGuest', {name: 'Guest'});
     }
 }
 
@@ -12,7 +19,7 @@ function main() {
     let clientApi = new BopcornClientApi(wsuri, 'bopcorn-api');
     let wtClient = new WebTorrent();
     let client = new BopcornClient(clientApi, wtClient);
-    clientApi.txRegisterGuest('Guest');
+    client.main()
 }
 
 main();
