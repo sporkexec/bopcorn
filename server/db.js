@@ -6,8 +6,31 @@ class DB {
         this.connection.serialize();
     }
 
+    async _run(query, params) { // async wrapper
+        return new Promise((resolve, reject) => {
+            this.connection.run(query, params || [], function(err) {
+                if(err) {
+                    reject(err);
+                } else {
+                    resolve(this); // this = finished statement
+                }
+            });
+        });
+    }
+
+    async _get(query, params) { // async wrapper
+        return new Promise((resolve, reject) => {
+            this.connection.get(query, params || [], function(err, row) {
+                if(err) {
+                    reject(err);
+                } else {
+                    resolve(row);
+                }
+            });
+        });
+    }
+
     createTables() {
-        this.connection.run('CREATE TABLE lorem (info TEXT)');
         this.connection.run(`CREATE TABLE users (
             id INTEGER PRIMARY KEY,
             name TEXT,
@@ -71,36 +94,21 @@ class DB {
         )`);
     }
 
-    seedData() {
-        let stmt = this.connection.prepare("INSERT INTO lorem VALUES (?)");
-        for (let i = 0; i < 10; i++) {
-            stmt.run("Ipsum " + i);
-        }
-        stmt.finalize();
-    }
-
-    printData() {
-        this.connection.each("SELECT rowid AS id, info FROM lorem", function(err, row) {
-            console.log(row.id + ": " + row.info);
-        });
-    }
-
-    genId() {
-        // 64b unsigned, this is a bad implementation FIXME
+    genId() { // fits in signed 64b int
         return Math.random() * (2**63)
     }
 
-    getUser(userId, callback) {
+    async userGet(userId) {
         // FIXME restrict this when we get sensitive columns
-        this.connection.get("SELECT * FROM users WHERE id = ?", userId, callback);
+        return await this._get("SELECT * FROM users WHERE id = ?", userId);
     }
 
-    createGuestUser(userId, name, callback) {
+    async userCreateGuest(name) {
+        const userId = this.genId();
         const validity = 60 * 60 * 24; // register within 1d (can be extended)
         const expiry = Date.now() + validity;
-
-        this.connection.run("INSERT INTO users (id, name, anon_expiry_unixtime) VALUES (?, ?, ?)",
-            [userId, name, expiry], callback);
+        await this._run("INSERT INTO users (id, name, anon_expiry_unixtime) VALUES (?, ?, ?)", [userId, name, expiry]);
+        return await this.userGet(userId);
     }
 }
 
