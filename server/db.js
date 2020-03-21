@@ -84,6 +84,24 @@ class DB {
             console.log(row.id + ": " + row.info);
         });
     }
+
+    genId() {
+        // 64b unsigned, this is a bad implementation FIXME
+        return Math.random() * (2**63)
+    }
+
+    getUser(userId, callback) {
+        // FIXME restrict this when we get sensitive columns
+        this.connection.get("SELECT * FROM users WHERE id = ?", userId, callback);
+    }
+
+    createGuestUser(userId, name, callback) {
+        const validity = 60 * 60 * 24; // register within 1d (can be extended)
+        const expiry = Date.now() + validity;
+
+        this.connection.run("INSERT INTO users (id, name, anon_expiry_unixtime) VALUES (?, ?, ?)",
+            [userId, name, expiry], callback);
+    }
 }
 
 module.exports = DB;

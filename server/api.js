@@ -1,15 +1,20 @@
 const WebSocketServer = require('websocket').server;
 
 class BopcornServerApi {
-    constructor(expressServer) {
+    constructor(expressServer, datastore) {
+        this.datastore = datastore;
         this.expressServer = expressServer;
         this.wsServer = new WebSocketServer({httpServer: this.expressServer, autoAcceptConnections: false});
         this.wsServer.on('request', this.onConnectionRequest.bind(this));
 
+        this.rxAnonEvents = [
+            // All other events will require a user/guest
+            'registerGuest',
+        ];
         this.rxEventHandlers = {
             // Add {eventName: this.rxSomeMethodName} entries to listen for
             // incoming events on any client connection.
-            'register': this.rxRegisterUser,
+            'registerGuest': this.rxRegisterGuest,
         };
     }
 
@@ -25,6 +30,7 @@ class BopcornServerApi {
         // }
 
         const connection = request.accept('bopcorn-api', request.origin);
+        connection.bopcorn_user_id = null;
         console.log('connection accepted');
         connection.on('close', function(reasonCode, description) { console.log('close'); });
         connection.on('message', this._rx.bind(this, connection));
@@ -56,6 +62,12 @@ class BopcornServerApi {
             console.error(`ignoring unknown event: ${eventName}`);
             return;
         }
+
+        // Require a user/guest, not anonymous
+        if (!connection.bopcorn_user_id && this.rxAnonEvents.indexOf(eventName) === -1) {
+            console.error(`ignoring ${eventName} event from anonymous connection`);
+            return;
+        }
         handler.bind(this, connection)(eventData);
 
         // else if (message.type === 'binary') {
@@ -64,12 +76,26 @@ class BopcornServerApi {
 
     // Everything clients can send us, add these to rxEventHandlers
 
-    rxRegisterUser(connection, eventData) {
-        console.log(`rxRegisterUser: ${eventData.name}`);
-        this._txEvent(connection, 'register', {'name': 'herpderp'});
+    rxRegisterGuest(connection, eventData) {
+        // this all sucks, we need promises/awaitables
+        console.log(`rxRegisterGuest: ${eventData.name}`);
+
+        const self = this;
+        const userId = this.datastore.genId();
+        this.datastore.createGuestUser(userId, eventData.name, function(err) {
+            if(!err) {
+                connection.bopcorn_user_id = userId;
+                self.datastore.getUser(userId, function(err, row) {
+                    if(!err) {
+                        self._txEvent(connection, 'whoami', {user: row});
+                    }
+                });
+            }
+        });
+
     }
 
-    // TODO: broadcast tx events
+    // TODO: broadcast tx events to room
 }
 
 module.exports = BopcornServerApi;

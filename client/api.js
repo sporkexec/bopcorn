@@ -13,7 +13,7 @@ class BopcornClientApi {
         this.rxEventHandlers = {
             // Add {eventName: this.rxSomeMethodName} entries to listen for
             // incoming events from the server.
-            'register': this.rxTestRegister,
+            'whoami': this.rxWhoami,
         };
 
         // Outgoing events are stored and retried on a timer, deleted upon ack from server
@@ -110,16 +110,16 @@ class BopcornClientApi {
         setTimeout(this._txSender.bind(this), 1000);
     }
 
-    // Everything we can send the server, no need to register these like rx
+    // Everything we can send the server, no need to specify handlers like rx
 
-    txRegisterUser(name, isGuest) {
-        this._tx('register', {name, isGuest});
+    txRegisterGuest(name) {
+        this._tx('registerGuest', {name});
     }
 
     // Everything the server can send us, add these to rxEventHandlers
 
-    rxTestRegister(eventData) {
-        console.log(`rxTestRegister ${eventData.name}`);
+    rxWhoami(eventData) {
+        console.log('server says we are', eventData.user);
     }
 }
 

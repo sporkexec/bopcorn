@@ -12,7 +12,7 @@ function main() {
     let clientApi = new BopcornClientApi(wsuri, 'bopcorn-api');
     let wtClient = new WebTorrent();
     let client = new BopcornClient(clientApi, wtClient);
-    clientApi.txRegisterUser('username', true);
+    clientApi.txRegisterGuest('Guest');
 }
 
 main();
