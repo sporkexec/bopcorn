@@ -6,7 +6,7 @@ const ReactDOM = require('react-dom');
 
 class App extends React.Component {
     render() {
-        return "ok";
+        return <i>ok</i>;
     }
 }
 
@@ -35,8 +35,7 @@ class BopcornClient {
         this.bcApi.tx('registerGuest', {name: 'Guest'});
 
         ReactDOM.render(
-            // <App data={this.store.data}></App>,
-            React.createElement(App, {data: this.store.data} /*, children*/),
+            <App data={this.store.data}></App>,
             document.getElementById('bopcornRoot')
         );
     }

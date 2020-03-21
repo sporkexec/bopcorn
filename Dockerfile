@@ -1,19 +1,11 @@
 FROM node:13-alpine
-
-RUN apk update && \
-    apk add --no-cache tini && \
-    apk add --update git
-
-WORKDIR /bopcorn
-COPY . .
-
-RUN npm install
-RUN npm install -g browserify
-RUN browserify client/main.js -o webroot/clientBundle.js
-
 EXPOSE 8080
 ENV NODE_ENV=production
-USER node
-
+RUN apk add --update git tini
 ENTRYPOINT ["/sbin/tini", "--"]
+WORKDIR /bopcorn
+COPY . .
+RUN yarn install
+RUN yarn build
+USER node
 CMD ["node", "server/main.js"]
