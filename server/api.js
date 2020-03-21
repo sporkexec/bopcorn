@@ -14,6 +14,7 @@ class BopcornServerApi {
         this.rxEventHandlers = {
             // Add {eventName: this.rxSomeMethodName} entries to listen for
             // incoming events on any client connection.
+            'createRoom': this.rxCreateRoom,
             'registerGuest': this.rxRegisterGuest,
         };
     }
@@ -78,8 +79,15 @@ class BopcornServerApi {
 
     async rxRegisterGuest(connection, eventData) {
         const user = await this.db.userCreateGuest(eventData.name);
-        console.log(`registered guest: ${user.name}`);
+        console.log(`registerGuest: ${user.name}`);
+        connection.bopcorn_user_id = user.id;
         this._txEvent(connection, 'whoami', {user});
+    }
+
+    async rxCreateRoom(connection, eventData) {
+        const room = await this.db.roomCreate(connection.bopcorn_user_id, eventData.name);
+        console.log(`createRoom: ${room.name}`);
+        this._txEvent(connection, 'createRoom', {room});
     }
 
     // TODO: broadcast tx events to room

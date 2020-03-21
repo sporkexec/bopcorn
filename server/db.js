@@ -7,13 +7,13 @@ class DB {
         this.connection.serialize();
     }
 
-    async _run(query, params) { // async wrapper
+    async _all(query, params) { // async wrapper
         return new Promise((resolve, reject) => {
-            this.connection.run(query, params || [], function(err) {
+            this.connection.all(query, params || [], function(err, rows) {
                 if(err) {
                     reject(err);
                 } else {
-                    resolve(this); // this = finished statement
+                    resolve(rows);
                 }
             });
         });
@@ -26,6 +26,18 @@ class DB {
                     reject(err);
                 } else {
                     resolve(row);
+                }
+            });
+        });
+    }
+
+    async _run(query, params) { // async wrapper
+        return new Promise((resolve, reject) => {
+            this.connection.run(query, params || [], function(err) {
+                if(err) {
+                    reject(err);
+                } else {
+                    resolve(this); // this = finished statement
                 }
             });
         });
@@ -50,6 +62,30 @@ class DB {
         const expiry = Date.now() + validity;
         await this._run("INSERT INTO users (id, name, guestExpiryUnixtime) VALUES (?, ?, ?)", [userId, name, expiry]);
         return await this.userGet(userId);
+    }
+
+    async roomGet(roomId) {
+        let row = await this._get("SELECT * FROM rooms WHERE id = ?", roomId);
+        let roles = await this._all("SELECT userId, role FROM roomRoles WHERE roomId = ?", roomId);
+        roles.forEach(r => {
+            if(r.role == 'creator') {
+                row.creatorId = r.userId;
+            } else if(r.role == 'moderator') {
+                row.moderatorIds = row.moderatorIds || [];
+                row.moderatorIds.push(r.userId);
+            } else if(r.role == 'inviter') {
+                row.inviterIds = row.inviterIds || [];
+                row.inviterIds.push(r.userId);
+            }
+        });
+        return row;
+    }
+
+    async roomCreate(creatorUserId, name) {
+        const roomId = this.genId();
+        await this._run("INSERT INTO rooms (id, name) VALUES (?, ?)", [roomId, name]);
+        await this._run("INSERT INTO roomRoles (roomId, userId, role) VALUES (?, ?, ?)", [roomId, creatorUserId ,'creator']);
+        return await this.roomGet(roomId);
     }
 }
 
