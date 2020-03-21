@@ -35,61 +35,61 @@ class DB {
             id INTEGER PRIMARY KEY,
             name TEXT,
             /* authn, appearance */
-            anon_expiry_unixtime INTEGER
+            guestExpiryUnixtime INTEGER
         )`);
         this.connection.run(`CREATE TABLE rooms (
             id INTEGER PRIMARY KEY,
             name TEXT
             /*
-            is_open_invites bool
-            dj_seat_count int
-            dj_seat_queue_model enum(free, queue, lottery)
-            dj_venue_override_enabled bool
+            isOpenInvites bool
+            djSeatCount int
+            djSeatQueueModel enum(free, queue, lottery)
+            djVenueOverrideEnabled bool
             default appearance/venue
             */
         )`);
-        this.connection.run(`CREATE TABLE room_roles (
-            room_id INTEGER,
-            user_id INTEGER,
+        this.connection.run(`CREATE TABLE roomRoles (
+            roomId INTEGER,
+            userId INTEGER,
             role TEXT, /* creator, moderator, inviter */
-            PRIMARY KEY(room_id, user_id)
+            PRIMARY KEY(roomId, userId)
         )`);
-        this.connection.run(`CREATE TABLE room_occupants (
-            room_id INTEGER,
-            user_id INTEGER,
-            dj_seat_occupied INTEGER,
-            inactivity_expiry_unixtime INTEGER,
+        this.connection.run(`CREATE TABLE roomOccupants (
+            roomId INTEGER,
+            userId INTEGER,
+            djSeatOccupied INTEGER,
+            inactivityExpiryUnixtime INTEGER,
             /* position/etc for whatever fun ui */
-            PRIMARY KEY(room_id, user_id)
+            PRIMARY KEY(roomId, userId)
         )`);
-        this.connection.run(`CREATE TABLE queue_items (
+        this.connection.run(`CREATE TABLE queueItems (
             id INTEGER PRIMARY KEY,
-            room_id INTEGER,
-            playlist_index INTEGER,
-            /* media_type enum(music/movie/tv/youtube) */
-            queuer_user_id INTEGER,
-            expiry_unixtime INTEGER,
+            roomId INTEGER,
+            playlistIndex INTEGER,
+            /* mediaType enum(music/movie/tv/youtube) */
+            queuerUserId INTEGER,
+            expiryUnixtime INTEGER,
 
             /* user supplied, cannot be verified */
-            content_uri TEXT, /* hash/torrent/link */
+            contentUri TEXT, /* hash/torrent/link */
             duration INTEGER,
             filesize INTEGER,
             title TEXT,
             artist TEXT
         )`);
-        this.connection.run(`CREATE TABLE media_states (
-            room_id INTEGER PRIMARY KEY,
+        this.connection.run(`CREATE TABLE mediaStates (
+            roomId INTEGER PRIMARY KEY,
             state TEXT, /* playing, paused, loading, idle? */
-            queue_item_id INTEGER,
-            last_known_playback_position INTEGER,
-            last_known_unixtime INTEGER
+            queueItemId INTEGER,
+            lastKnownPlaybackPosition INTEGER,
+            lastKnownUnixtime INTEGER
         )`);
         this.connection.run(`CREATE TABLE messages (
             id INTEGER PRIMARY KEY,
-            room_id INTEGER,
-            user_id INTEGER,
-            creation_unixtime INTEGER,
-            queue_item_id INTEGER,
+            roomId INTEGER,
+            userId INTEGER,
+            creationUnixtime INTEGER,
+            queueItemId INTEGER,
             content TEXT
         )`);
     }
@@ -107,7 +107,7 @@ class DB {
         const userId = this.genId();
         const validity = 60 * 60 * 24; // register within 1d (can be extended)
         const expiry = Date.now() + validity;
-        await this._run("INSERT INTO users (id, name, anon_expiry_unixtime) VALUES (?, ?, ?)", [userId, name, expiry]);
+        await this._run("INSERT INTO users (id, name, guestExpiryUnixtime) VALUES (?, ?, ?)", [userId, name, expiry]);
         return await this.userGet(userId);
     }
 }
