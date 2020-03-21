@@ -1,26 +1,23 @@
 <template>
-    <div>
-        <h3>oh hi, {{name}}</h3>
-        <button @click="register">Make me a guest</button>
-    </div>
+    <Login v-if='isAnon'></Login>
+    <Room v-else-if='room.id'></Room>
+    <Lobby v-else></Lobby>
 </template>
 
 <script>
+import Lobby from './flow/Lobby.vue';
+import Login from './flow/Login.vue';
+import Room from './flow/Room.vue';
+
 export default {
+    components: { Lobby, Login, Room },
     computed: {
-        name() {
-            const whoami = this.$store.state.server.whoami;
-            return whoami.name || 'Anonymous';
+        isAnon() {
+            return !this.$store.state.server.whoami.id;
+        },
+        room() {
+            return this.$store.state.server.room;
         },
     },
-    methods: {
-        register() {
-            const name = 'noot-noot king';
-            this.$store.serverTx('registerGuest', {name});
-        }
-    }
 }
 </script>
-
-<style scoped>
-</style>

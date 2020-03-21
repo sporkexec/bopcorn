@@ -99,8 +99,11 @@ class DB {
     }
 
     async roomOccupancyGet(roomId) {
-        // TODO consider restricting expiry
-        return await this._all("SELECT userId, djSeatOccupied, inactivityExpiryUnixtime FROM roomOccupants WHERE roomId = ?", roomId);
+        return await this._all(`SELECT userId, djSeatOccupied, name
+            FROM roomOccupants
+            INNER JOIN users
+            ON users.id = roomOccupants.userId
+            WHERE roomId = ?`, roomId);
     }
 }
 

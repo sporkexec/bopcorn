@@ -44,6 +44,11 @@ class BopcornServerApi {
         connection.sendUTF(payload);
     }
 
+    // _txEventToRoom(connection, roomId, eventName, eventData) {
+    //     const payload = this._encode([eventName, eventData]);
+    //     connection.sendUTF(payload);
+    // }
+
     _rx(connection, message) {
         // Parse all incoming events and route to handlers
         if (message.type !== 'utf8') {
@@ -89,7 +94,10 @@ class BopcornServerApi {
     async rxCreateRoom(connection, eventData) {
         const room = await this.db.roomCreate(connection.bopcorn_user_id, eventData.name);
         console.log(`createRoom: ${room.name}`);
-        this._txEvent(connection, 'createRoom', {room});
+        // Force join newly created rooms
+        await this.db.roomOccupancySet(room.id, connection.bopcorn_user_id);
+        this._txEvent(connection, 'joinRoom', {room});
+        // TODO announce newb
     }
 
     async rxJoinRoom(connection, eventData) {
@@ -99,12 +107,12 @@ class BopcornServerApi {
         //     pass if has a role,
         //     else parse an invite token and check creator against room.inviterIds
 
-        await this.db.roomOccupancySet(eventData.roomId, connection.bopcorn_user_id);
+        await this.db.roomOccupancySet(room.id, connection.bopcorn_user_id);
         this._txEvent(connection, 'joinRoom', {room})
+        // TODO announce newb
     }
 
     async rxReloadRoomOccupancy(connection, eventData) {
-        // const room = await this.db.roomGet(eventData.roomId);
         let occupants = await this.db.roomOccupancyGet(eventData.roomId);
 
         // TODO authorization: ensure connection's user is in occupants
