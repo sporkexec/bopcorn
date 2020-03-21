@@ -2,7 +2,7 @@
     <div>
         <b>We got the whole gang here:</b><br>
         <ul>
-            <li v-for="occupant in occupants" :key="occupant.userId">
+            <li v-for="occupant in occupants">
                 {{occupant.name}} (id {{occupant.userId}})
             </li>
         </ul>

@@ -37,7 +37,7 @@ module.exports = {
     roomId INTEGER,
     playlistIndex INTEGER,
     /* mediaType enum(music/movie/tv/youtube) */
-    queuerUserId INTEGER,
+    userId INTEGER,
     expiryUnixtime INTEGER,
 
     /* user supplied, cannot be verified */

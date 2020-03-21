@@ -1,3 +1,5 @@
+import Vue from 'vue';
+
 export default {
     namespaced: true,
     state: () => ({
@@ -5,7 +7,7 @@ export default {
         whoami: {},
         queueItems: [],
         room: {},
-        roomOccupants: [],
+        roomOccupants: {}, // userId -> roomOccupant + name
         serverWsConnection: {
             txMethod: undefined, // Sends events to server through ws
         },
@@ -19,6 +21,12 @@ export default {
         },
         setRoomOccupants(state, occupants) {
             state.roomOccupants = occupants;
+        },
+        addRoomOccupant(state, occupant) {
+            Vue.set(state.roomOccupants, occupant.userId, occupant);
+        },
+        removeRoomOccupant(state, {userId}) {
+            delete state.roomOccupants[userId];
         },
         setQueueItems(state, queueItems) {
             state.queueItems = queueItems;
@@ -40,16 +48,15 @@ export default {
             this.serverTx('reloadRoomOccupancy', {roomId: room.id});
         },
         rx_roomOccupancy({commit}, {occupants}) {
-            commit('setRoomOccupants', occupants);
+            // From list into kv keyed by userId
+            const occupantsKv = occupants.reduce((map, o) => (map[o.userId] = o, map), {});
+            commit('setRoomOccupants', occupantsKv);
         },
         rx_roomOccupancyAdd({commit, state}, {occupant}) {
-            const newOccupants = state.roomOccupants.filter(o => o.userId != occupant.id);
-            newOccupants.push(occupant);
-            commit('setRoomOccupants', newOccupants);
+            commit('addRoomOccupant', occupant);
         },
         rx_roomOccupancyRemove({commit, state}, {userId}) {
-            const newOccupants = state.roomOccupants.filter(o => o.userId != userId);
-            commit('setRoomOccupants', newOccupants);
+            commit('removeRoomOccupant', {userId});
         },
         rx_queueItems({commit}, {queueItems}) {
             commit('setQueueItems', queueItems);
