@@ -97,6 +97,11 @@ class DB {
         // TODO: bump expiry on collision?
         console.log(`roomOccupancySet for ${userId} in ${roomId}`);
     }
+
+    async roomOccupancyGet(roomId) {
+        // TODO consider restricting expiry
+        return await this._all("SELECT userId, djSeatOccupied, inactivityExpiryUnixtime FROM roomOccupants WHERE roomId = ?", roomId);
+    }
 }
 
 module.exports = DB;

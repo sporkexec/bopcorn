@@ -17,6 +17,7 @@ class BopcornServerApi {
             'joinRoom': this.rxJoinRoom,
             'createRoom': this.rxCreateRoom,
             'registerGuest': this.rxRegisterGuest,
+            'reloadRoomOccupancy': this.rxReloadRoomOccupancy,
         };
     }
 
@@ -100,6 +101,16 @@ class BopcornServerApi {
 
         await this.db.roomOccupancySet(eventData.roomId, connection.bopcorn_user_id);
         this._txEvent(connection, 'joinRoom', {room})
+    }
+
+    async rxReloadRoomOccupancy(connection, eventData) {
+        // const room = await this.db.roomGet(eventData.roomId);
+        let occupants = await this.db.roomOccupancyGet(eventData.roomId);
+
+        // TODO authorization: ensure connection's user is in occupants
+        // TODO decorate occupants with appearance, or otherwise send user appearance/details?
+
+        this._txEvent(connection, 'roomOccupancy', {occupants})
     }
 
     // TODO: broadcast tx events to room
