@@ -105,6 +105,19 @@ class DB {
             ON users.id = roomOccupants.userId
             WHERE roomId = ?`, roomId);
     }
+
+    async roomOccupancyGetUser(roomId, userId) {
+        return await this._get(`SELECT userId, djSeatOccupied, name
+            FROM roomOccupants
+            INNER JOIN users
+            ON users.id = roomOccupants.userId
+            WHERE roomId = ? AND userId = ?`, [roomId, userId]);
+    }
+
+    async roomOccupancyRemove(roomId, userId) {
+        return await this._all(`DELETE FROM roomOccupants
+            WHERE roomId = ? AND userId = ?`, [roomId, userId]);
+    }
 }
 
 module.exports = DB;

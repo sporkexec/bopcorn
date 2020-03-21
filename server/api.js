@@ -7,6 +7,7 @@ class BopcornServerApi {
         this.wsServer = new WebSocketServer({httpServer: this.expressServer, autoAcceptConnections: false});
         this.wsServer.on('request', this.onConnectionRequest.bind(this));
 
+        this.roomToConnections = {};
         this.rxAnonEvents = [
             // All other events will require a user/guest
             'registerGuest',
@@ -33,10 +34,28 @@ class BopcornServerApi {
         // }
 
         const connection = request.accept('bopcorn-api', request.origin);
-        connection.bopcorn_user_id = null;
+        connection.userId = null;
+        connection.roomId = null;
         console.log('connection accepted');
-        connection.on('close', function(reasonCode, description) { console.log('close'); });
         connection.on('message', this._rx.bind(this, connection));
+        connection.on('close', async (reasonCode, description) => {
+            console.log('close');
+
+            // Cleanup room broadcast list
+            const roomId = connection.roomId;
+            const userId = connection.userId;
+            const conns = this.roomToConnections[roomId];
+            if(!conns) {
+                return;
+            }
+            for(let i = conns.length - 1; i >= 0; i--) {
+                if(conns[i] === connection) {
+                    conns.splice(i, 1);
+                }
+            }
+
+            await this.roomOccupancyRemove(roomId, userId);
+        });
     }
 
     _txEvent(connection, eventName, eventData) {
@@ -44,10 +63,11 @@ class BopcornServerApi {
         connection.sendUTF(payload);
     }
 
-    // _txEventToRoom(connection, roomId, eventName, eventData) {
-    //     const payload = this._encode([eventName, eventData]);
-    //     connection.sendUTF(payload);
-    // }
+    _txEventToRoom(roomId, eventName, eventData) {
+        const payload = this._encode([eventName, eventData]);
+        const connections = this.roomToConnections[roomId] || [];
+        connections.forEach(conn => conn.sendUTF(payload));
+    }
 
     _rx(connection, message) {
         // Parse all incoming events and route to handlers
@@ -73,7 +93,7 @@ class BopcornServerApi {
         }
 
         // Require a user/guest, not anonymous
-        if (!connection.bopcorn_user_id && this.rxAnonEvents.indexOf(eventName) === -1) {
+        if (!connection.userId && this.rxAnonEvents.indexOf(eventName) === -1) {
             console.error(`ignoring ${eventName} event from anonymous connection`);
             return;
         }
@@ -82,22 +102,42 @@ class BopcornServerApi {
         Promise.resolve(result).catch(err => console.error(err));
     }
 
+    async joinRoom(room, connection) {
+        const roomId = room.id;
+        const userId = connection.userId;
+
+        await this.db.roomOccupancySet(roomId, userId);
+        if(!this.roomToConnections[roomId]) {
+            this.roomToConnections[roomId] = [];
+        }
+        this.roomToConnections[roomId].push(connection);
+        connection.roomId = roomId;
+        this._txEvent(connection, 'joinRoom', {room});
+
+        const user = await this.db.roomOccupancyGetUser(roomId, userId);
+        this._txEventToRoom(roomId, 'roomOccupancyAdd', {occupant: user});
+    }
+
+    async roomOccupancyRemove(roomId, userId) {
+        // Delete occupancy and broadcast to room
+        await this.db.roomOccupancyRemove(roomId, userId);
+        this._txEventToRoom(roomId, 'roomOccupancyRemove', {userId});
+    }
+
     // Everything clients can send us, add these to rxEventHandlers
 
     async rxRegisterGuest(connection, eventData) {
         const user = await this.db.userCreateGuest(eventData.name);
         console.log(`registerGuest: ${user.name}`);
-        connection.bopcorn_user_id = user.id;
+        connection.userId = user.id;
         this._txEvent(connection, 'whoami', {user});
     }
 
     async rxCreateRoom(connection, eventData) {
-        const room = await this.db.roomCreate(connection.bopcorn_user_id, eventData.name);
+        const room = await this.db.roomCreate(connection.userId, eventData.name);
         console.log(`createRoom: ${room.name}`);
         // Force join newly created rooms
-        await this.db.roomOccupancySet(room.id, connection.bopcorn_user_id);
-        this._txEvent(connection, 'joinRoom', {room});
-        // TODO announce newb
+        await this.joinRoom(room, connection);
     }
 
     async rxJoinRoom(connection, eventData) {
@@ -107,9 +147,7 @@ class BopcornServerApi {
         //     pass if has a role,
         //     else parse an invite token and check creator against room.inviterIds
 
-        await this.db.roomOccupancySet(room.id, connection.bopcorn_user_id);
-        this._txEvent(connection, 'joinRoom', {room})
-        // TODO announce newb
+        await this.joinRoom(room, connection);
     }
 
     async rxReloadRoomOccupancy(connection, eventData) {

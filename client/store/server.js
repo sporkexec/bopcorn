@@ -37,6 +37,15 @@ export default {
         rx_roomOccupancy({commit}, {occupants}) {
             commit('setRoomOccupants', occupants);
         },
+        rx_roomOccupancyAdd({commit, state}, {occupant}) {
+            const newOccupants = state.roomOccupants.filter(o => o.userId != occupant.id);
+            newOccupants.push(occupant);
+            commit('setRoomOccupants', newOccupants);
+        },
+        rx_roomOccupancyRemove({commit, state}, {userId}) {
+            const newOccupants = state.roomOccupants.filter(o => o.userId != userId);
+            commit('setRoomOccupants', newOccupants);
+        },
 
         // Internal
         _rx({dispatch}, {eventName, eventData}) {
