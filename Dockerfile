@@ -9,7 +9,7 @@ COPY . .
 
 RUN npm install
 RUN npm install -g browserify
-RUN browserify client/main.js -o webroot/client_bundle.js
+RUN browserify client/main.js -o webroot/clientBundle.js
 
 EXPOSE 8080
 ENV NODE_ENV=production
