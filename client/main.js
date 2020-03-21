@@ -10,8 +10,14 @@ class BopcornClient {
         // This flows backwards because these aren't realistic flows,
         // with UI involved this'll make more sense.
 
+        this.bcApi.rx.on('joinRoom', eventData => {
+            console.log('room joined:', eventData.room);
+        });
+
         this.bcApi.rx.on('createRoom', eventData => {
             console.log('room created:', eventData.room);
+            // room created, now join it
+            this.bcApi.tx('joinRoom', {roomId: eventData.room.id});
         });
 
         this.bcApi.rx.on('whoami', eventData => {

@@ -87,6 +87,16 @@ class DB {
         await this._run("INSERT INTO roomRoles (roomId, userId, role) VALUES (?, ?, ?)", [roomId, creatorUserId ,'creator']);
         return await this.roomGet(roomId);
     }
+
+    async roomOccupancySet(roomId, userId, djSeatOccupied) {
+        const seat = djSeatOccupied || null;
+        const validity = 60 * 5; // Reap after 5m of no updates
+        const expiry = Date.now() + validity;
+        await this._run(`INSERT INTO roomOccupants (roomId, userId, djSeatOccupied, inactivityExpiryUnixtime)
+            VALUES (?, ?, ?, ?)`, [roomId, userId, seat, expiry]);
+        // TODO: bump expiry on collision?
+        console.log(`roomOccupancySet for ${userId} in ${roomId}`);
+    }
 }
 
 module.exports = DB;
