@@ -5,9 +5,9 @@ export default {
     state: () => ({
         // Use a new state object each time, prevents pollution in eg tests
         whoami: {},
-        queueItems: [],
+        queueItems: {},
         room: {},
-        roomOccupants: {}, // userId -> roomOccupant + name
+        roomOccupants: {}, // roomOccupant.userId -> roomOccupant + name
         serverWsConnection: {
             txMethod: undefined, // Sends events to server through ws
         },
@@ -31,9 +31,12 @@ export default {
         setQueueItems(state, queueItems) {
             state.queueItems = queueItems;
         },
+        addQueueItem(state, queueItem) {
+            Vue.set(state.queueItems, queueItem.id, queueItem);
+        },
+
         _linkServerApi(state, serverApi) {
             // Used once to wire serverWs <-> serverStore
-            // tx(eventName, eventData, headers) -> txId
             state.serverWsConnection.txMethod = serverApi.tx.bind(serverApi);
             serverApi.storeDispatch = this.dispatch.bind(this); // calls _rx
         },
@@ -46,6 +49,7 @@ export default {
         rx_joinRoom({store, commit}, {room}) {
             commit('setRoom', room);
             this.serverTx('reloadRoomOccupancy', {roomId: room.id});
+            this.serverTx('reloadQueueItems', {roomId: room.id});
         },
         rx_roomOccupancy({commit}, {occupants}) {
             // From list into kv keyed by userId
@@ -59,12 +63,12 @@ export default {
             commit('removeRoomOccupant', {userId});
         },
         rx_queueItems({commit}, {queueItems}) {
-            commit('setQueueItems', queueItems);
+            // From list into kv keyed by id
+            const queueItemsKv = queueItems.reduce((map, qi) => (map[qi.id] = qi, map), {});
+            commit('setQueueItems', queueItemsKv);
         },
         rx_addQueueItem({commit, state}, {queueItem}) {
-            const newItems = state.queueItems.filter(i => i.id != queueItem.id);
-            newItems.push(queueItem);
-            commit('setQueueItems', newItems)
+            commit('addQueueItem', queueItem)
         },
 
         // Internal

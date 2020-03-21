@@ -58,7 +58,7 @@ class DB {
 
     async userCreateGuest(name) {
         const userId = this.genId();
-        const validity = 60 * 60 * 24; // register within 1d (can be extended)
+        const validity = 1000 * 60 * 60 * 24; // register within 1d (can be extended)
         const expiry = Date.now() + validity;
         await this._run("INSERT INTO users (id, name, guestExpiryUnixtime) VALUES (?, ?, ?)", [userId, name, expiry]);
         return await this.userGet(userId);
@@ -90,7 +90,7 @@ class DB {
 
     async roomOccupancySet(roomId, userId, djSeatOccupied) {
         const seat = djSeatOccupied || null;
-        const validity = 60 * 5; // Reap after 5m of no updates
+        const validity = 1000 * 60 * 5; // Reap after 5m of no updates
         const expiry = Date.now() + validity;
         await this._run(`INSERT INTO roomOccupants (roomId, userId, djSeatOccupied, inactivityExpiryUnixtime)
             VALUES (?, ?, ?, ?)`, [roomId, userId, seat, expiry]);
@@ -124,7 +124,7 @@ class DB {
         // TODO append instead, maybe allow mods+ to directly insert to an index?
         // actually that makes things hard for clients to recalc, maybe always append and reorder with separate tx?
         const playlistIndex = 1;
-        const validity = 60 * 60; // 1h, TODO calculate from reported duration, update upon queue reorder, cleanup
+        const validity = 1000 * 60 * 60; // 1h, TODO calculate from reported duration, update upon queue reorder, cleanup
         const expiry = Date.now() + validity;
         const qi = queueItemInput;
         await this._run(`
