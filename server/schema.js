@@ -42,6 +42,7 @@ module.exports = {
 
     /* user supplied, cannot be verified */
     contentUri TEXT, /* hash/torrent/link */
+    infoHash TEXT,
     duration INTEGER,
     filesize INTEGER,
     title TEXT,

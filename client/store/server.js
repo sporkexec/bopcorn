@@ -62,13 +62,19 @@ export default {
         rx_roomOccupancyRemove({commit, state}, {userId}) {
             commit('removeRoomOccupant', {userId});
         },
-        rx_queueItems({commit}, {queueItems}) {
+        rx_queueItems({commit, dispatch}, {queueItems}) {
             // From list into kv keyed by id
             const queueItemsKv = queueItems.reduce((map, qi) => (map[qi.id] = qi, map), {});
             commit('setQueueItems', queueItemsKv);
+
+            // Add torrents, note this doesn't remove other torrents, maybe TODO
+            queueItems.forEach(queueItem => {
+                this.dispatch('webtorrent/leechQueueItem', {queueItem});
+            });
         },
-        rx_addQueueItem({commit, state}, {queueItem}) {
+        rx_addQueueItem({commit,store,  dispatch}, {queueItem}) {
             commit('addQueueItem', queueItem)
+            this.dispatch('webtorrent/leechQueueItem', {queueItem})
         },
 
         // Internal

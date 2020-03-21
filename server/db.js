@@ -128,9 +128,9 @@ class DB {
         const expiry = Date.now() + validity;
         const qi = queueItemInput;
         await this._run(`
-            INSERT INTO queueItems (id, roomId, playlistIndex, userId, expiryUnixtime, contentUri, duration, filesize, title, artist)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-            [id, qi.roomId, playlistIndex, userId, expiry, qi.contentUri, qi.duration, qi.filesize, qi.title, qi.artist]);
+            INSERT INTO queueItems (id, roomId, playlistIndex, userId, expiryUnixtime, contentUri, infoHash, duration, filesize, title, artist)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [id, qi.roomId, playlistIndex, userId, expiry, qi.contentUri, qi.infoHash, qi.duration, qi.filesize, qi.title, qi.artist]);
         return id;
     }
 

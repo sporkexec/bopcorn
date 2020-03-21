@@ -14,10 +14,7 @@ function main() {
     store.commit('server/_linkServerApi', serverApi);
 
     // Store actions call wt, wt callbacks call store actions
-    const wtClient = new WebTorrent({
-        tracker: false,
-        dht: false,
-    });
+    const wtClient = new WebTorrent();
     store.commit('webtorrent/_setWtInstance', wtClient);
 
     const app = new Vue({

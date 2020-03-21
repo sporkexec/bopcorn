@@ -4,8 +4,8 @@
         <hr>
         <b>all the shit you stole 🏴‍☠️</b>
         <ul>
-            <li v-for="torrent in torrents" :key="torrent.infoHash">
-                <button v-if="torrent.isMine" @click="addQueueItem(torrent)">NQ</button>
+            <li v-for="torrent in torrents" v-if="torrent.isMine" :key="torrent.infoHash">
+                <button @click="addQueueItem(torrent)">NQ</button>
                 {{torrent.name}}, size {{torrent.length}}, progress {{torrent.progress}}
             </li>
         </ul>
@@ -30,6 +30,7 @@ export default {
                 contentUri: torrent.magnetURI,
                 // computed client side. do we even want to accept this?
                 // we'll need to revalidate for each client anyways.
+                infoHash: torrent.infoHash,
                 filesize: torrent.length,
                 duration: 201, // 3m 21s
                 title: torrent.name, // TODO parse metadata from content
