@@ -1,0 +1,16 @@
+{
+  "name": "bopcorn",
+  "version": "0.0.1",
+  "description": "Interactive DJ/movie nights with friends",
+  "author": "Jacob Courtneay <jacob@sporkexec.com>",
+  "main": "server/main.js",
+  "scripts": {
+    "start": "node server/main.js"
+  },
+  "dependencies": {
+    "express": "^4.17.1",
+    "sqlite3": "^4.1.1",
+    "websocket": "^1.0.31",
+    "webtorrent": "~0.107"
+  }
+}
