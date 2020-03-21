@@ -54,7 +54,7 @@ export default {
         rx_queueItems({commit}, {queueItems}) {
             commit('setQueueItems', queueItems);
         },
-        rx_queueItemsAdd({commit, state}, {queueItem}) {
+        rx_addQueueItem({commit, state}, {queueItem}) {
             const newItems = state.queueItems.filter(i => i.id != queueItem.id);
             newItems.push(queueItem);
             commit('setQueueItems', newItems)

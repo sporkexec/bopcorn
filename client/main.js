@@ -1,3 +1,4 @@
+import 'babel-polyfill';
 import Store from './store';
 import ServerWsApi from './api';
 import App from './ui/App.vue';

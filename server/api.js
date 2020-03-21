@@ -171,7 +171,7 @@ class BopcornServerApi {
         // TODO authorization: ensure user is occupant, check DJs, check is mod
         const itemId = await this.db.queueItemsAdd(connection.userId, eventData.queueItem);
         const queueItem = await this.db.queueItemsGetItem(itemId);
-        this._txEventToRoom(queueItem.roomId, 'queueItemsAdd', {queueItem});
+        this._txEventToRoom(queueItem.roomId, 'addQueueItem', {queueItem});
     }
 }
 
