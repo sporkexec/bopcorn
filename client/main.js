@@ -2,7 +2,7 @@ import Store from './store';
 import ServerWsApi from './api';
 import App from './ui/App.vue';
 import Vue from 'vue';
-// import WebTorrent from 'webtorrent';
+import WebTorrent from 'webtorrent';
 
 function main() {
     const serverWsParams = ['ws://' + window.location.host, 'bopcorn-api'];
@@ -12,8 +12,12 @@ function main() {
     const serverApi = new ServerWsApi(serverWsParams);
     store.commit('server/_linkServerApi', serverApi);
 
-    // TODO: make wt, hook into torrent store
-    // let wtClient = new WebTorrent();
+    // Store actions call wt, wt callbacks call store actions
+    const wtClient = new WebTorrent({
+        tracker: false,
+        dht: false,
+    });
+    store.commit('webtorrent/_setWtInstance', wtClient);
 
     const app = new Vue({
         el: '#bopcornRoot',

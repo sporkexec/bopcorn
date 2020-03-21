@@ -1,6 +1,7 @@
 import Vue from 'vue'
 import Vuex from 'vuex'
 import ServerModule from './server';
+import WebtorrentModule from './webtorrent';
 
 export default function() {
     Vue.use(Vuex);
@@ -8,8 +9,8 @@ export default function() {
         strict: true,
         modules: {
             server: ServerModule,
+            webtorrent: WebtorrentModule,
             // local: LocalModule,
-            // webtorrent: WebtorrentModule,
         },
     });
 
